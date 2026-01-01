@@ -1,6 +1,6 @@
 {
   "name": "Budget Cap",
-  "short_name": "Budget",
+  "short_name": "BudgetCap",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#1f1c2c",
