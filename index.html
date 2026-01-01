@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Budget Cap</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- ✅ PWA ADDITIONS -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1f1c2c">
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg-gradient: linear-gradient(135deg,#1f1c2c,#928dab);
+  --card-bg: rgba(255,255,255,0.88);
+  --text:#1f2933;
+}
+
+body.dark {
+  --bg-gradient: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+  --card-bg: rgba(30,30,30,0.85);
+  --text:#ffffff;
+}
+
+body {
+  margin:0;
+  font-family:Inter,sans-serif;
+  background:var(--bg-gradient);
+  color:var(--text);
+  min-height:100vh;
+}
+
+header {
+  padding:20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  color:#fff;
+}
+
+.container {
+  max-width:460px;
+  margin:auto;
+}
+
+.card {
+  background:var(--card-bg);
+  backdrop-filter: blur(14px);
+  margin:16px;
+  padding:22px 20px;
+  border-radius:22px;
+  box-shadow:0 20px 40px rgba(0,0,0,.15);
+}
+
+.total {
+  font-size:44px;
+  font-weight:700;
+  margin-top:6px;
+}
+
+select,
+input {
+  width:100%;
+  height:48px;
+  padding:0 14px;
+  box-sizing:border-box;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,0.25);
+  background:rgba(255,255,255,0.75);
+  font-size:14px;
+  color:#111;
+}
+
+body.dark select,
+body.dark input {
+  background:rgba(255,255,255,0.12);
+  border:1px solid rgba(255,255,255,0.18);
+  color:#fff;
+}
+
+#form {
+  background:rgba(0,0,0,0.35);
+}
+
+button {
+  border:none;
+  padding:14px;
+  border-radius:16px;
+  background:linear-gradient(135deg,#00c6ff,#0072ff);
+  color:#fff;
+  font-weight:600;
+  cursor:pointer;
+}
+
+button.small {
+  padding:8px 14px;
+  font-size:12px;
+}
+
+button.delete {
+  background:linear-gradient(135deg,#ff416c,#ff4b2b);
+}
+
+.fab {
+  position:fixed;
+  bottom:24px;
+  right:24px;
+  width:66px;
+  height:66px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#ff9a9e,#fad0c4);
+  color:#000;
+  font-size:36px;
+}
+
+/* ===== HAMBURGER ===== */
+
+.menu { position:relative; z-index:1000; }
+.menu button { background:none; font-size:26px; padding:6px 10px; }
+
+.dropdown {
+  position:absolute;
+  right:0;
+  top:42px;
+  background:rgba(0,0,0,0.75);
+  backdrop-filter:blur(10px);
+  border-radius:14px;
+  overflow:hidden;
+  display:none;
+  min-width:190px;
+}
+
+.dropdown button {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  width:100%;
+  padding:12px 16px;
+  font-size:14px;
+  background:none;
+  color:#fff;
+  border:none;
+  cursor:pointer;
+  text-align:left;
+}
+
+.dropdown button:hover {
+  background:rgba(255,255,255,0.12);
+}
+
+/* ===== PASSBOOK ===== */
+
+.entry {
+  background:rgba(255,255,255,0.7);
+  border-radius:18px;
+  padding:18px;
+  margin:18px 0;
+}
+
+body.dark .entry {
+  background:rgba(255,255,255,0.08);
+}
+
+.entry b {
+  display:block;
+  font-size:16px;
+  margin:6px 0 4px;
+}
+
+.entry small {
+  display:block;
+  margin-bottom:12px;
+  opacity:0.7;
+}
+
+.entry-actions {
+  display:flex;
+  gap:12px;
+}
+
+.chip {
+  display:inline-block;
+  padding:6px 14px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:600;
+  color:#fff;
+  margin-bottom:6px;
+}
+
+.Food{background:#ff7675}
+.Travel{background:#74b9ff}
+.Bills{background:#ffeaa7;color:#000}
+.Shopping{background:#55efc4;color:#000}
+.Entertainment{background:#a29bfe}
+.Others{background:#b2bec3}
+
+canvas { display:block; margin:20px auto 0; }
+
+.legend { margin-top:14px; }
+.legend div { display:flex; align-items:center; margin:6px 0; }
+.legend span {
+  width:12px;
+  height:12px;
+  border-radius:50%;
+  margin-right:8px;
+}
+
+.empty {
+  text-align:center;
+  padding:30px 0;
+  opacity:0.6;
+}
+</style>
+</head>
+
+<body>
+
+<header class="container">
+  <h2>Budget Cap</h2>
+  <div class="menu">
+    <button onclick="toggleMenu()">☰</button>
+    <div class="dropdown" id="menu">
+      <button onclick="exportData()">📤 Export Data</button>
+      <button onclick="importClick()">📥 Import Data</button>
+      <button onclick="toggleCategoryView()">📁 Category View</button>
+      <button onclick="setMonthlyBudget()">💰 Set Monthly Budget</button>
+    </div>
+  </div>
+</header>
+
+<input type="file" id="importFile" hidden onchange="importData(event)">
+
+<div class="container">
+
+  <div class="card">
+    <select id="monthSelect" onchange="loadMonth()"></select>
+    <div style="opacity:.7;font-size:13px;margin-top:12px;">Total this month</div>
+    <div class="total">₹ <span id="total">0</span></div>
+    <div style="opacity:.6;font-size:13px;margin-top:6px;">
+      Remaining: ₹ <span id="remaining">0</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Spending Breakdown</h3>
+    <canvas id="chart" width="280" height="280"></canvas>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="card" id="categoryView" style="display:none;">
+    <h3>Categorical Expenses</h3>
+    <select id="categoryFilter" onchange="renderCategoryView()">
+      <option>Food</option>
+      <option>Travel</option>
+      <option>Bills</option>
+      <option>Shopping</option>
+      <option>Entertainment</option>
+      <option selected>Others</option>
+    </select>
+
+    <div id="categoryTotal" style="margin:12px 0;font-weight:600;"></div>
+    <div id="categoryEntries"></div>
+  </div>
+
+  <div class="card" id="form" style="display:none;">
+    <input id="titleInput" placeholder="What did you spend on?">
+    <input id="amountInput" type="number" placeholder="Amount" style="margin-top:14px;">
+    <select id="categoryInput" style="margin-top:14px;">
+      <option>Food</option>
+      <option>Travel</option>
+      <option>Bills</option>
+      <option>Shopping</option>
+      <option>Entertainment</option>
+      <option selected>Others</option>
+    </select>
+    <button onclick="saveExpense()" style="margin-top:18px;">Save Expense</button>
+  </div>
+
+  <div class="card">
+    <h3>Passbook</h3>
+    <div id="entries"></div>
+  </div>
+
+</div>
+
+<button class="fab" onclick="toggleForm()">+</button>
+
+<script>
+let currentKey="",editIndex=null,lastTotal=0;
+const colors={Food:"#ff7675",Travel:"#74b9ff",Bills:"#ffeaa7",Shopping:"#55efc4",Entertainment:"#a29bfe",Others:"#b2bec3"};
+
+function toggleMenu(){
+  menu.style.display = menu.style.display==="block"?"none":"block";
+}
+
+/* ===== BUDGET ===== */
+function budgetKey(){ return "budget-"+currentKey; }
+function getBudget(){ return parseInt(localStorage[budgetKey()] || 4500); }
+function setMonthlyBudget(){
+  const val = prompt("Enter monthly budget", getBudget());
+  if(!val || isNaN(val)) return;
+  localStorage[budgetKey()] = parseInt(val);
+  render();
+}
+
+/* CATEGORY VIEW */
+function toggleCategoryView(){
+  categoryView.style.display =
+    categoryView.style.display==="none"?"block":"none";
+  renderCategoryView();
+}
+
+function renderCategoryView(){
+  const cat = categoryFilter.value;
+  const d = JSON.parse(localStorage[currentKey] || "[]");
+
+  categoryEntries.innerHTML = "";
+  let total = 0;
+
+  d.filter(e => e.category === cat).forEach(e => {
+    total += e.amount;
+    categoryEntries.innerHTML += `
+      <div class="entry">
+        <span class="chip ${cat}">${cat}</span>
+        <b>${e.title} — ₹${e.amount}</b>
+        <small>${e.date}</small>
+      </div>`;
+  });
+
+  categoryTotal.innerText = `Total ${cat}: ₹ ${total}`;
+
+  if (!categoryEntries.innerHTML) {
+    categoryEntries.innerHTML = `<div class="empty">No ${cat} expenses</div>`;
+    categoryTotal.innerText = "";
+  }
+}
+
+/* IMPORT / EXPORT */
+function exportData(){
+  const data=JSON.stringify(localStorage,null,2);
+  const blob=new Blob([data],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="budget-backup.json";
+  a.click();
+}
+function importClick(){ importFile.click(); }
+function importData(e){
+  const r=new FileReader();
+  r.onload=()=>{
+    const d=JSON.parse(r.result);
+    localStorage.clear();
+    Object.keys(d).forEach(k=>localStorage[k]=d[k]);
+    location.reload();
+  };
+  r.readAsText(e.target.files[0]);
+}
+
+/* CORE */
+function monthKey(m,y){return`expenses-${m}-${y}`}
+function setupMonths(){
+  const n=new Date(),y=n.getFullYear();
+  for(let m=0;m<12;m++){
+    const k=monthKey(m,y);
+    if(!localStorage[k])localStorage[k]="[]";
+    const o=document.createElement("option");
+    o.value=k;
+    o.text=new Date(y,m).toLocaleString("default",{month:"long",year:"numeric"});
+    monthSelect.appendChild(o);
+  }
+  currentKey=monthKey(n.getMonth(),y);
+  monthSelect.value=currentKey;
+}
+
+function loadMonth(){
+  currentKey=monthSelect.value;
+  render();
+  renderCategoryView();
+}
+
+function toggleForm(){
+  form.style.display=form.style.display==="none"?"block":"none";
+}
+
+function saveExpense(){
+  const t=titleInput.value,a=parseInt(amountInput.value),c=categoryInput.value;
+  if(!t||!a)return;
+  let d=JSON.parse(localStorage[currentKey]);
+  const e={title:t,amount:a,category:c,date:new Date().toLocaleDateString()};
+  editIndex!==null?(d[editIndex]=e):d.push(e);
+  editIndex=null;
+  localStorage[currentKey]=JSON.stringify(d);
+  titleInput.value=amountInput.value="";
+  toggleForm();
+  render(); renderCategoryView();
+}
+
+function edit(i){
+  const d=JSON.parse(localStorage[currentKey])[i];
+  titleInput.value=d.title;
+  amountInput.value=d.amount;
+  categoryInput.value=d.category;
+  editIndex=i;
+  form.style.display="block";
+}
+
+function del(i){
+  let d=JSON.parse(localStorage[currentKey]);
+  d.splice(i,1);
+  localStorage[currentKey]=JSON.stringify(d);
+  render(); renderCategoryView();
+}
+
+function render(){
+  const d=JSON.parse(localStorage[currentKey]);
+  entries.innerHTML="";
+  let sum=0,catSum={};
+  d.forEach((e,i)=>{
+    sum+=e.amount;
+    catSum[e.category]=(catSum[e.category]||0)+e.amount;
+    entries.innerHTML+=`
+      <div class="entry">
+        <span class="chip ${e.category}">${e.category}</span>
+        <b>${e.title} — ₹${e.amount}</b>
+        <small>${e.date}</small>
+        <div class="entry-actions">
+          <button class="small" onclick="edit(${i})">Edit</button>
+          <button class="small delete" onclick="del(${i})">Delete</button>
+        </div>
+      </div>`;
+  });
+  total.innerText=sum;
+  remaining.innerText=getBudget()-sum;
+  drawChart(catSum);
+}
+
+function drawChart(data){
+  const ctx=chart.getContext("2d");
+  ctx.clearRect(0,0,280,280);
+  legend.innerHTML="";
+  let sum=Object.values(data).reduce((a,b)=>a+b,0),a=0;
+  for(let k in data){
+    const s=(data[k]/sum)*Math.PI*2;
+    ctx.beginPath();
+    ctx.moveTo(140,140);
+    ctx.arc(140,140,110,a,a+s);
+    ctx.fillStyle=colors[k];
+    ctx.fill();
+    a+=s;
+    legend.innerHTML+=`<div><span style="background:${colors[k]}"></span>${k} – ₹${data[k]}</div>`;
+  }
+}
+
+setupMonths();
+render();
+</script>
+
+<!-- ✅ SERVICE WORKER REGISTRATION -->
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("service-worker.js");
+  });
+}
+</script>
+
+</body>
+</html>
