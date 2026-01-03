@@ -15,6 +15,25 @@
   color: #111111;
   color-scheme: light dark;
 }
+.progress-wrap {
+  margin-top: 14px;
+  width: 100%;
+  height: 8px;
+  background: rgba(0,0,0,0.15);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+body.dark .progress-wrap {
+  background: rgba(255,255,255,0.18);
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0%;
+  background: #4caf50;
+  transition: width 0.35s ease, background 0.3s ease;
+}
 
 /* Dark mode dropdown options */
 body.dark select option {
@@ -266,6 +285,13 @@ canvas { display:block; margin:20px auto 0; }
       <div style="opacity:.6;font-size:13px;margin-top:4px;">
   Yesterday spent: ₹ <span id="yesterdayTotal">0</span>
 </div>
+<div class="progress-wrap">
+  <div class="progress-bar" id="budgetBar"></div>
+</div>
+<div id="budgetPercent" style="font-size:13px; opacity:.7; margin-top:8px;">
+  0% of budget used
+</div>
+
     </div>
   </div>
 
@@ -329,6 +355,31 @@ function toggleDarkMode() {
     document.body.classList.contains("dark") ? "on" : "off"
   );
 }
+
+function updateBudgetBar(spent) {
+  const bar = document.getElementById("budgetBar");
+  const label = document.getElementById("budgetPercent");
+  if (!bar || !label) return;
+
+  const budget = getBudget();
+  const percent = budget > 0 ? Math.min((spent / budget) * 100, 100) : 0;
+  const rounded = Math.round(percent);
+
+  bar.style.width = percent + "%";
+  label.innerText = `${rounded}% of budget used`;
+  label.style.fontWeight = percent >= 90 ? "700" : "500";
+
+
+  if (percent >= 90) {
+    bar.style.background = "#e53935"; // red
+  } else if (percent >= 75) {
+    bar.style.background = "#fbc02d"; // yellow
+  } else {
+    bar.style.background = "#4caf50"; // green
+  }
+}
+
+
 
 /* ===== BUDGET ===== */
 function budgetKey(){ return "budget-"+currentKey; }
@@ -571,6 +622,7 @@ function render(){
   remaining.innerText = getBudget() - sum;
   yesterdayTotal.innerText = yesterdaySum;
   todayTotal.innerText = todaySum;
+  updateBudgetBar(sum);
 
   drawChart(catSum);
 }
