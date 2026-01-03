@@ -437,33 +437,47 @@ function downloadMonthPDF() {
   let y = 20;
   let total = 0;
 
-  /* ===== TITLE ===== */
-  doc.setFontSize(16);
-  doc.text(`Expenses - ${monthText}`, 14, y);
+  /* ===== HEADER ===== */
+  doc.setFontSize(18);
+  doc.setTextColor(40);
+  doc.text("Budget Cap", 14, y);
+
+  doc.setFontSize(11);
+  doc.setTextColor(100);
+  doc.text(`Monthly Statement • ${monthText}`, 14, y + 6);
+
+  y += 14;
+  doc.setDrawColor(180);
+  doc.line(14, y, 196, y);
   y += 10;
 
   /* ===== TABLE HEADER ===== */
   doc.setFontSize(11);
+  doc.setTextColor(60);
   doc.text("Date", 14, y);
-  doc.text("Category", 45, y);
-  doc.text("Description", 85, y);
-  doc.text("Amount", 170, y, { align: "right" });
+  doc.text("Category", 42, y);
+  doc.text("Description", 80, y);
+  doc.text("Amount (Rs.)", 195, y, { align: "right" });
 
   y += 4;
+  doc.setDrawColor(200);
   doc.line(14, y, 196, y);
-  y += 6;
+  y += 8;
 
   /* ===== TABLE ROWS ===== */
-  data.forEach(e => {
-    const date = e.date || "";
-    const category = e.category || "";
-    const title = e.title || "";
-    const amount = `Rs. ${e.amount}`;
+  data.forEach((e, index) => {
 
-    doc.text(date, 14, y);
-    doc.text(category, 45, y);
-    doc.text(title, 85, y);
-    doc.text(amount, 170, y, { align: "right" });
+    // Zebra row background
+    if (index % 2 === 0) {
+      doc.setFillColor(245, 245, 245);
+      doc.rect(14, y - 6, 182, 8, "F");
+    }
+
+    doc.setTextColor(20);
+    doc.text(e.date || "", 14, y);
+    doc.text(e.category || "", 42, y);
+    doc.text(e.title || "", 80, y);
+    doc.text(`Rs. ${e.amount.toLocaleString("en-IN")}`, 195, y, { align: "right" });
 
     y += 8;
     total += e.amount;
@@ -475,17 +489,54 @@ function downloadMonthPDF() {
   });
 
   /* ===== TOTAL ===== */
-  y += 2;
+  y += 6;
+  doc.setDrawColor(150);
   doc.line(14, y, 196, y);
-  y += 8;
+  y += 10;
 
-  doc.setFontSize(12);
-  doc.text("TOTAL", 120, y);
-  doc.text(`Rs.${total}`, 170, y, { align: "right" });
+  doc.setFontSize(13);
+  doc.setTextColor(0);
+  doc.text("TOTAL SPENT", 120, y);
+
+  doc.setFontSize(14);
+  doc.setTextColor(33, 150, 243);
+  doc.text(`Rs. ${total.toLocaleString("en-IN")}`, 195, y, { align: "right" });
+
+  /* ===== CATEGORY SUMMARY PAGE ===== */
+  doc.addPage();
+  doc.setFontSize(16);
+  doc.setTextColor(0);
+  doc.text("Category Summary", 14, 20);
+
+  let y2 = 35;
+  const catSum = {};
+
+  data.forEach(e => {
+    catSum[e.category] = (catSum[e.category] || 0) + e.amount;
+  });
+
+  Object.keys(catSum).forEach(cat => {
+    doc.setFontSize(12);
+    doc.text(cat, 14, y2);
+    doc.text(`Rs. ${catSum[cat].toLocaleString("en-IN")}`, 195, y2, { align: "right" });
+    y2 += 8;
+  });
+
+  /* ===== FOOTER ===== */
+  const pages = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pages; i++) {
+    doc.setPage(i);
+    doc.setFontSize(9);
+    doc.setTextColor(150);
+    doc.text(
+      `Generated on ${new Date().toLocaleString()}`,
+      14,
+      290
+    );
+  }
 
   doc.save(`Budget-${monthText}.pdf`);
 }
-
 
 /* IMPORT / EXPORT */
 function exportData(){
