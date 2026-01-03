@@ -242,6 +242,9 @@ canvas { display:block; margin:20px auto 0; }
     <div class="total">₹ <span id="total">0</span></div>
     <div style="opacity:.6;font-size:13px;margin-top:6px;">
       Remaining: ₹ <span id="remaining">0</span>
+      <div style="opacity:.6;font-size:13px;margin-top:4px;">
+  Yesterday spent: ₹ <span id="yesterdayTotal">0</span>
+</div>
     </div>
   </div>
 
@@ -480,6 +483,18 @@ function del(i){
   render(); renderCategoryView();
 }
 
+function getYesterdayTotal(data) {
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+
+  const yDate = yesterday.toLocaleDateString();
+
+  return data
+    .filter(e => e.date === yDate)
+    .reduce((sum, e) => sum + e.amount, 0);
+}
+
 function render(){
   const d=JSON.parse(localStorage[currentKey]);
   entries.innerHTML="";
@@ -500,6 +515,7 @@ function render(){
   });
   total.innerText=sum;
   remaining.innerText=getBudget()-sum;
+  yesterdayTotal.innerText = getYesterdayTotal(d);
   drawChart(catSum);
 }
 
