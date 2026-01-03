@@ -261,6 +261,9 @@ canvas { display:block; margin:20px auto 0; }
     <div style="opacity:.6;font-size:13px;margin-top:6px;">
       Remaining: ₹ <span id="remaining">0</span>
       <div style="opacity:.6;font-size:13px;margin-top:4px;">
+  Today spent: ₹ <span id="todayTotal">0</span>
+</div>
+      <div style="opacity:.6;font-size:13px;margin-top:4px;">
   Yesterday spent: ₹ <span id="yesterdayTotal">0</span>
 </div>
     </div>
@@ -515,6 +518,8 @@ function getYesterdayTotal(data) {
   yesterday.setDate(today.getDate() - 1);
 
   const yDate = yesterday.toLocaleDateString();
+  const todayStr = today.toLocaleDateString();
+let todaySum = 0;
 
   return data
     .filter(e => e.date === yDate)
@@ -522,13 +527,35 @@ function getYesterdayTotal(data) {
 }
 
 function render(){
-  const d=JSON.parse(localStorage[currentKey]);
-  entries.innerHTML="";
-  let sum=0,catSum={};
+  const d = JSON.parse(localStorage[currentKey]);
+  entries.innerHTML = "";
+
+  let sum = 0,
+      catSum = {};
+
+  let yesterdaySum = 0;
+  let todaySum = 0;
+
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+
+  const todayStr = today.toLocaleDateString();
+  const yesterdayStr = yesterday.toLocaleDateString();
+
   d.forEach((e,i)=>{
-    sum+=e.amount;
-    catSum[e.category]=(catSum[e.category]||0)+e.amount;
-    entries.innerHTML+=`
+    sum += e.amount;
+    catSum[e.category] = (catSum[e.category] || 0) + e.amount;
+
+    if (e.date === yesterdayStr) {
+      yesterdaySum += e.amount;
+    }
+
+    if (e.date === todayStr) {
+      todaySum += e.amount;
+    }
+
+    entries.innerHTML += `
       <div class="entry">
         <span class="chip ${e.category}">${e.category}</span>
         <b>${e.title} — ₹${e.amount}</b>
@@ -539,11 +566,15 @@ function render(){
         </div>
       </div>`;
   });
-  total.innerText=sum;
-  remaining.innerText=getBudget()-sum;
-  yesterdayTotal.innerText = getYesterdayTotal(d);
+
+  total.innerText = sum;
+  remaining.innerText = getBudget() - sum;
+  yesterdayTotal.innerText = yesterdaySum;
+  todayTotal.innerText = todaySum;
+
   drawChart(catSum);
 }
+
 
 function drawChart(data){
   const ctx=chart.getContext("2d");
