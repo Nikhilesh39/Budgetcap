@@ -227,6 +227,7 @@ canvas { display:block; margin:20px auto 0; }
       <button onclick="importClick()">📥 Import Data</button>
       <button onclick="toggleCategoryView()">📁 Category View</button>
       <button onclick="setMonthlyBudget()">💰 Set Monthly Budget</button>
+      <button onclick="downloadMonthPDF()">📄 Download Month PDF</button>
     </div>
   </div>
 </header>
@@ -288,6 +289,7 @@ canvas { display:block; margin:20px auto 0; }
 
 <button class="fab" onclick="toggleForm()">+</button>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 let currentKey="",editIndex=null,lastTotal=0;
 const colors={Food:"#ff7675",Travel:"#74b9ff",Bills:"#ffeaa7",Shopping:"#55efc4",Entertainment:"#a29bfe",Others:"#b2bec3"};
@@ -337,6 +339,70 @@ function renderCategoryView(){
     categoryTotal.innerText = "";
   }
 }
+
+function downloadMonthPDF() {
+  const data = JSON.parse(localStorage[currentKey] || "[]");
+  if (!data.length) {
+    alert("No expenses for this month");
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  const monthText = monthSelect.options[monthSelect.selectedIndex].text;
+  let y = 20;
+  let total = 0;
+
+  /* ===== TITLE ===== */
+  doc.setFontSize(16);
+  doc.text(`Expenses - ${monthText}`, 14, y);
+  y += 10;
+
+  /* ===== TABLE HEADER ===== */
+  doc.setFontSize(11);
+  doc.text("Date", 14, y);
+  doc.text("Category", 45, y);
+  doc.text("Description", 85, y);
+  doc.text("Amount", 170, y, { align: "right" });
+
+  y += 4;
+  doc.line(14, y, 196, y);
+  y += 6;
+
+  /* ===== TABLE ROWS ===== */
+  data.forEach(e => {
+    const date = e.date || "";
+    const category = e.category || "";
+    const title = e.title || "";
+    const amount = `Rs. ${e.amount}`;
+
+    doc.text(date, 14, y);
+    doc.text(category, 45, y);
+    doc.text(title, 85, y);
+    doc.text(amount, 170, y, { align: "right" });
+
+    y += 8;
+    total += e.amount;
+
+    if (y > 270) {
+      doc.addPage();
+      y = 20;
+    }
+  });
+
+  /* ===== TOTAL ===== */
+  y += 2;
+  doc.line(14, y, 196, y);
+  y += 8;
+
+  doc.setFontSize(12);
+  doc.text("TOTAL", 120, y);
+  doc.text(`Rs.${total}`, 170, y, { align: "right" });
+
+  doc.save(`Budget-${monthText}.pdf`);
+}
+
 
 /* IMPORT / EXPORT */
 function exportData(){
@@ -461,11 +527,11 @@ render();
 <!-- ✅ SERVICE WORKER REGISTRATION -->
 <script>
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("service-worker.js");
-  });
+  navigator.serviceWorker.register("service-worker.js");
 }
 </script>
 
 </body>
 </html>
+
+
