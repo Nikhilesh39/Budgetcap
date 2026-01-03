@@ -578,7 +578,7 @@ let todaySum = 0;
 }
 
 function render(){
-  const d = JSON.parse(localStorage[currentKey]);
+  const d = JSON.parse(localStorage[currentKey]).slice().reverse();
   entries.innerHTML = "";
 
   let sum = 0,
