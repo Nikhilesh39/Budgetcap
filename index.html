@@ -9,13 +9,6 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1f1c2c">
 
-html, body {
-  height: auto;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
-}
-
 <style>
   select option {
   background: #ffffff;
@@ -26,6 +19,13 @@ html, body {
 .entry,
 .fab {
   will-change: transform;
+}
+
+html, body {
+  height: auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
 }
 
 .progress-wrap {
@@ -743,5 +743,6 @@ if ("serviceWorker" in navigator) {
 
 </body>
 </html>
+
 
 
