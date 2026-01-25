@@ -15,17 +15,16 @@
   color: #111111;
   color-scheme: light dark;
 }
-.card,
-.entry,
-.fab {
-  will-change: transform;
+
+html {
+  height: 100%;
 }
 
-html, body {
-  height: auto;
+body {
+  min-height: 100%;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
+  overscroll-behavior-y: auto;
 }
 
 .progress-wrap {
@@ -628,21 +627,28 @@ function saveExpense(){
   render(); renderCategoryView();
 }
 
-function edit(i){
-  const d=JSON.parse(localStorage[currentKey])[i];
-  titleInput.value=d.title;
-  amountInput.value=d.amount;
-  categoryInput.value=d.category;
-  editIndex=i;
-  form.style.display="block";
+function edit(i) {
+  const d = JSON.parse(localStorage[currentKey]);
+  const e = d[i];
+
+  titleInput.value = e.title;
+  amountInput.value = e.amount;
+  categoryInput.value = e.category;
+
+  editIndex = i;
+  form.style.display = "block";
 }
 
-function del(i){
-  let d=JSON.parse(localStorage[currentKey]);
-  d.splice(i,1);
-  localStorage[currentKey]=JSON.stringify(d);
-  render(); renderCategoryView();
+
+function del(i) {
+  let d = JSON.parse(localStorage[currentKey]);
+  d.splice(i, 1);
+  localStorage[currentKey] = JSON.stringify(d);
+
+  render();
+  renderCategoryView();
 }
+
 
 function getYesterdayTotal(data) {
   const today = new Date();
@@ -658,15 +664,14 @@ let todaySum = 0;
     .reduce((sum, e) => sum + e.amount, 0);
 }
 
-function render(){
-  const d = JSON.parse(localStorage[currentKey]).slice().reverse();
+function render() {
+  const original = JSON.parse(localStorage[currentKey] || "[]");
+  const d = original.slice().reverse();
+
   entries.innerHTML = "";
 
-  let sum = 0,
-      catSum = {};
-
-  let yesterdaySum = 0;
-  let todaySum = 0;
+  let sum = 0, catSum = {};
+  let yesterdaySum = 0, todaySum = 0;
 
   const today = new Date();
   const yesterday = new Date(today);
@@ -675,17 +680,14 @@ function render(){
   const todayStr = today.toLocaleDateString();
   const yesterdayStr = yesterday.toLocaleDateString();
 
-  d.forEach((e,i)=>{
+  d.forEach((e, i) => {
+    const realIndex = original.length - 1 - i;
+
     sum += e.amount;
     catSum[e.category] = (catSum[e.category] || 0) + e.amount;
 
-    if (e.date === yesterdayStr) {
-      yesterdaySum += e.amount;
-    }
-
-    if (e.date === todayStr) {
-      todaySum += e.amount;
-    }
+    if (e.date === yesterdayStr) yesterdaySum += e.amount;
+    if (e.date === todayStr) todaySum += e.amount;
 
     entries.innerHTML += `
       <div class="entry">
@@ -693,8 +695,8 @@ function render(){
         <b>${e.title} — ₹${e.amount}</b>
         <small>${e.date}</small>
         <div class="entry-actions">
-          <button class="small" onclick="edit(${i})">Edit</button>
-          <button class="small delete" onclick="del(${i})">Delete</button>
+          <button class="small" onclick="edit(${realIndex})">Edit</button>
+          <button class="small delete" onclick="del(${realIndex})">Delete</button>
         </div>
       </div>`;
   });
@@ -703,10 +705,11 @@ function render(){
   remaining.innerText = getBudget() - sum;
   yesterdayTotal.innerText = yesterdaySum;
   todayTotal.innerText = todaySum;
-  updateBudgetBar(sum);
 
+  updateBudgetBar(sum);
   drawChart(catSum);
 }
+
 
 
 function drawChart(data){
@@ -743,7 +746,3 @@ if ("serviceWorker" in navigator) {
 
 </body>
 </html>
-
-
-
-
