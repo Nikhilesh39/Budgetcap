@@ -1645,7 +1645,7 @@ function downloadMonthPDF() {
   doc.setFontSize(16);
   doc.setTextColor(0, 0, 0);
   doc.setFont("Helvetica", "bold");
-  doc.text("₹" + formatNum(total), 18, y+25);
+  doc.text("Rs. " + formatNum(total), 18, y+25);
 
   doc.setFillColor(240, 240, 255);
   doc.rect(70, y, 50, 35, "F");
@@ -1654,7 +1654,7 @@ function downloadMonthPDF() {
   doc.text("BUDGET", 73, y+8);
   doc.setFontSize(16);
   doc.setTextColor(0, 0, 0);
-  doc.text("₹" + formatNum(budget), 73, y+25);
+  doc.text("Rs. " + formatNum(budget), 73, y+25);
 
   const remaining = budget - total;
   doc.setFillColor(remaining >= 0 ? 200 : 255, 100, 100);
@@ -1664,7 +1664,7 @@ function downloadMonthPDF() {
   doc.text("REMAINING", 128, y+8);
   doc.setFontSize(16);
   doc.setTextColor(0, 0, 0);
-  doc.text("₹" + formatNum(Math.max(0, remaining)), 128, y+25);
+  doc.text("Rs. " + formatNum(Math.max(0, remaining)), 128, y+25);
 
   y += 50;
 
@@ -1685,11 +1685,11 @@ function downloadMonthPDF() {
   const avgDaily = total / days;
 
   const insights = [
-    { label: "Daily Average", value: "₹" + formatNum(avgDaily) },
-    { label: "Average per Transaction", value: "₹" + formatNum(avgTx) },
-    { label: "Highest Transaction", value: "₹" + formatNum(maxExp) },
-    { label: "Lowest Transaction", value: "₹" + formatNum(minExp) },
-    { label: "Total Transactions", value: data.length },
+    { label: "Daily Average", value: "Rs. " + formatNum(avgDaily) },
+    { label: "Average per Transaction", value: "Rs. " + formatNum(avgTx) },
+    { label: "Highest Transaction", value: "Rs. " + formatNum(maxExp) },
+    { label: "Lowest Transaction", value: "Rs. " + formatNum(minExp) },
+{ label: "Total Transactions", value: String(data.length) },
     { label: "Budget Utilization", value: Math.round((total / budget) * 100) + "%" }
   ];
 
@@ -1728,7 +1728,7 @@ function downloadMonthPDF() {
     const pct = ((val / total) * 100).toFixed(1);
     doc.setTextColor(60, 60, 60);
     doc.text(cat, 15, y);
-    doc.text("₹" + formatNum(val), 100, y);
+    doc.text("Rs. " + formatNum(val), 100, y);
     doc.text(pct + "%", 150, y);
     y += 7;
   });
@@ -1765,7 +1765,7 @@ function downloadMonthPDF() {
     doc.text(e.date, 15, y);
     doc.text(e.title.substring(0, 25), 35, y);
     doc.text(e.category, 120, y);
-    doc.text("₹" + formatNum(e.amount), 160, y);
+    doc.text("Rs. " + formatNum(e.amount), 160, y);
     y += 6;
 
     if (y > 270) {
