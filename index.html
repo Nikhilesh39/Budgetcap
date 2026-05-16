@@ -662,7 +662,6 @@ input:focus, select:focus, textarea:focus {
   letter-spacing: 0.5px;
 }
 
-/* ─── CATEGORY PAGE ─── */
 .cat-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -767,7 +766,6 @@ input:focus, select:focus, textarea:focus {
 
 .back-btn:hover { border-color: var(--accent); }
 
-/* ─── RECOMMENDATIONS ─── */
 .recommendation {
   background: linear-gradient(145deg, rgba(194,255,77,0.08), rgba(77,223,255,0.08));
   border: 1px solid rgba(194,255,77,0.15);
@@ -780,6 +778,27 @@ input:focus, select:focus, textarea:focus {
 .recommendation-icon {
   font-size: 18px;
   margin-bottom: 6px;
+}
+
+.insight-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.insight-row:last-child {
+  border-bottom: none;
+}
+
+.insight-row .label {
+  color: var(--text2);
+}
+
+.insight-row .value {
+  font-weight: 600;
+  color: var(--accent);
 }
 </style>
 </head>
@@ -813,12 +832,11 @@ input:focus, select:focus, textarea:focus {
 
 <div class="container">
 
-  <!-- MONTH SELECT -->
   <div class="month-row">
     <select id="monthSelect" onchange="loadMonth()"></select>
   </div>
 
-  <!-- ─── HOME TAB ─── -->
+  <!-- HOME TAB -->
   <div id="tab-home" class="tab-content active">
     <div class="card hero-card">
       <div class="card-label">Total Spent This Month</div>
@@ -874,7 +892,7 @@ input:focus, select:focus, textarea:focus {
     </div>
   </div>
 
-  <!-- ─── INSIGHTS TAB ─── -->
+  <!-- INSIGHTS TAB -->
   <div id="tab-insights" class="tab-content">
     <div class="time-filter">
       <button class="time-btn active" onclick="filterByTime(7)">Last 7d</button>
@@ -942,12 +960,17 @@ input:focus, select:focus, textarea:focus {
     </div>
 
     <div class="card">
-      <div class="card-title">Smart Insights</div>
+      <div class="card-title">Detailed Insights</div>
+      <div id="detailedInsights" style="margin-top: 16px;"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Smart Recommendations</div>
       <div id="smartInsights" style="display: flex; flex-direction: column; gap: 10px; margin-top: 16px;"></div>
     </div>
   </div>
 
-  <!-- ─── CATEGORIES TAB ─── -->
+  <!-- CATEGORIES TAB -->
   <div id="tab-categories" class="tab-content">
     <div id="catView">
       <div class="cat-grid" id="catGrid"></div>
@@ -997,7 +1020,7 @@ input:focus, select:focus, textarea:focus {
     </div>
   </div>
 
-  <!-- ─── EXPENSES LIST ─── -->
+  <!-- EXPENSES LIST -->
   <div id="tab-list" class="tab-content">
     <div style="margin-bottom: 12px;">
       <input type="text" id="searchBox" placeholder="Search expenses..." onkeyup="filterExpenses()">
@@ -1005,7 +1028,7 @@ input:focus, select:focus, textarea:focus {
     <div id="entries"></div>
   </div>
 
-  <!-- ─── ADD FORM ─── -->
+  <!-- ADD FORM -->
   <div id="tab-add" class="tab-content">
     <div class="card form-card">
       <h3 id="formTitle">Add Expense</h3>
@@ -1058,6 +1081,10 @@ const CAT_ICONS = {
 };
 
 const $ = id => document.getElementById(id);
+
+function formatNum(n) {
+  return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
 
 function toast(msg) {
   const t = $("toast");
@@ -1187,7 +1214,6 @@ function delEntry(i) {
   render();
 }
 
-/* ─────────── FILTER EXPENSES ─── */
 function filterExpenses() {
   const query = $("searchBox").value.toLowerCase();
   const original = JSON.parse(localStorage[currentKey] || "[]");
@@ -1206,26 +1232,25 @@ function filterExpenses() {
     return;
   }
 
-  filtered.forEach((e, ri) => {
-    const real = original.length - 1 - original.indexOf(e);
+  filtered.forEach((e) => {
+    const real = original.indexOf(e);
     entriesEl.innerHTML += `
       <div class="entry">
         <div class="entry-top">
           <span class="chip ${e.category}">${e.category}</span>
-          <span class="entry-amount">₹${e.amount.toLocaleString("en-IN")}</span>
+          <span class="entry-amount">₹${formatNum(e.amount)}</span>
         </div>
         <div class="entry-title">${e.title}</div>
         <div class="entry-meta">${e.date} ${e.recurring ? '<span class="rbadge">↻ RECURRING</span>' : ''}</div>
         ${e.note ? `<div class="entry-note">${e.note}</div>` : ''}
         <div class="entry-actions">
-          <button class="btn btn-sm btn-edit" onclick="editEntry(${original.indexOf(e)})">Edit</button>
-          <button class="btn btn-sm btn-del" onclick="delEntry(${original.indexOf(e)})">Delete</button>
+          <button class="btn btn-sm btn-edit" onclick="editEntry(${real})">Edit</button>
+          <button class="btn btn-sm btn-del" onclick="delEntry(${real})">Delete</button>
         </div>
       </div>`;
   });
 }
 
-/* ─────────── CATEGORY VIEW ─── */
 function renderCategoryView() {
   const catSum = {};
   const data = JSON.parse(localStorage[currentKey] || "[]");
@@ -1244,7 +1269,7 @@ function renderCategoryView() {
       <div class="cat-card" onclick="viewCategoryDetail('${cat}')">
         <div class="cat-icon">${CAT_ICONS[cat]}</div>
         <div class="cat-name">${cat}</div>
-        <div class="cat-amount">₹${data.total.toLocaleString("en-IN")}</div>
+        <div class="cat-amount">₹${formatNum(data.total)}</div>
         <div class="cat-count">${data.count} transactions • ${pct}% of budget</div>
       </div>`;
   }).join("");
@@ -1265,19 +1290,19 @@ function viewCategoryDetail(cat) {
   $("catDetailName").textContent = cat;
   $("catDetailIcon").textContent = CAT_ICONS[cat];
   $("catDetailCount").textContent = catExpenses.length;
-  $("catDetailTotal").textContent = total.toLocaleString("en-IN");
-  $("catDetailAvg").textContent = Math.round(avg).toLocaleString("en-IN");
-  $("catDetailMax").textContent = max.toLocaleString("en-IN");
-  $("catDetailMin").textContent = min.toLocaleString("en-IN");
+  $("catDetailTotal").textContent = formatNum(total);
+  $("catDetailAvg").textContent = formatNum(avg);
+  $("catDetailMax").textContent = formatNum(max);
+  $("catDetailMin").textContent = formatNum(min);
   $("catDetailPct").textContent = pct + "%";
 
   const entriesHtml = catExpenses
     .sort((a, b) => new Date(b.date) - new Date(a.date))
-    .map((e, i) => `
+    .map((e) => `
       <div class="entry" style="margin-bottom: 8px;">
         <div class="entry-top">
           <span>${e.title}</span>
-          <span class="entry-amount">₹${e.amount.toLocaleString("en-IN")}</span>
+          <span class="entry-amount">₹${formatNum(e.amount)}</span>
         </div>
         <div class="entry-meta">${e.date} ${e.recurring ? '<span class="rbadge">↻</span>' : ''}</div>
         ${e.note ? `<div class="entry-note">${e.note}</div>` : ''}
@@ -1296,7 +1321,6 @@ function backFromCategoryDetail() {
   currentCategoryView = null;
 }
 
-/* ─────────── RENDER ─────────── */
 function render() {
   const original = JSON.parse(localStorage[currentKey] || "[]");
   const rev = [...original].reverse();
@@ -1322,7 +1346,7 @@ function render() {
       <div class="entry">
         <div class="entry-top">
           <span class="chip ${e.category}">${e.category}</span>
-          <span class="entry-amount">₹${e.amount.toLocaleString("en-IN")}</span>
+          <span class="entry-amount">₹${formatNum(e.amount)}</span>
         </div>
         <div class="entry-title">${e.title}</div>
         <div class="entry-meta">${e.date} ${e.recurring ? '<span class="rbadge">↻ RECURRING</span>' : ''}</div>
@@ -1336,15 +1360,15 @@ function render() {
 
   if (!original.length) entriesEl.innerHTML = `<div class="empty">No expenses — tap + to add!</div>`;
 
-  $("total").textContent = sum.toLocaleString("en-IN");
-  $("todayTotal").textContent = todaySum.toLocaleString("en-IN");
-  $("yesterdayTotal").textContent = yestSum.toLocaleString("en-IN");
-  $("maxExpense").textContent = maxExp.toLocaleString("en-IN");
+  $("total").textContent = formatNum(sum);
+  $("todayTotal").textContent = formatNum(todaySum);
+  $("yesterdayTotal").textContent = formatNum(yestSum);
+  $("maxExpense").textContent = formatNum(maxExp);
 
   const budget = getBudget();
   const rem = budget - sum;
-  $("remaining").textContent = Math.max(0, rem).toLocaleString("en-IN");
-  $("budgetLbl").textContent = budget.toLocaleString("en-IN");
+  $("remaining").textContent = formatNum(Math.max(0, rem));
+  $("budgetLbl").textContent = formatNum(budget);
   $("remVal").style.color = rem < 0 ? "var(--accent2)" : "var(--accent)";
 
   const pct = budget > 0 ? Math.min((sum / budget) * 100, 100) : 0;
@@ -1354,7 +1378,7 @@ function render() {
   $("budgetPct").textContent = `${Math.round(pct)}% used`;
 
   const days = today.getDate();
-  $("avgDaily").textContent = Math.round(sum / days).toLocaleString("en-IN");
+  $("avgDaily").textContent = formatNum(sum / days);
   const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
   $("daysLeft").textContent = lastDay - days;
   $("txCount").textContent = original.length;
@@ -1365,7 +1389,6 @@ function render() {
   drawWeekly(original);
 }
 
-/* ─────────── INSIGHTS ─────────── */
 function renderInsights() {
   const filtered = getFilteredExpenses();
   const catSum = {};
@@ -1382,14 +1405,14 @@ function renderInsights() {
   const dailyVel = sum / timeFilter;
   const budget = getBudget();
 
-  $("avgInsight").textContent = "₹" + Math.round(avgTx).toLocaleString("en-IN");
+  $("avgInsight").textContent = "₹" + formatNum(avgTx);
   $("topCatInsight").textContent = maxCat || "—";
-  $("weeklyAvgInsight").textContent = "₹" + Math.round(weekAvg).toLocaleString("en-IN");
-  $("dailyInsight").textContent = "₹" + Math.round(dailyVel).toLocaleString("en-IN");
+  $("weeklyAvgInsight").textContent = "₹" + formatNum(weekAvg);
+  $("dailyInsight").textContent = "₹" + formatNum(dailyVel);
 
   // Budget vs Actual
-  $("budgetAmount").textContent = budget.toLocaleString("en-IN");
-  $("actualAmount").textContent = sum.toLocaleString("en-IN");
+  $("budgetAmount").textContent = formatNum(budget);
+  $("actualAmount").textContent = formatNum(sum);
   const budgetBar2 = $("budgetBar2");
   budgetBar2.style.width = "100%";
   const actualBar = $("actualBar");
@@ -1398,39 +1421,68 @@ function renderInsights() {
   const status = sum <= budget * 0.8 ? "✅ On Track" : sum <= budget ? "⚠️ Near Limit" : "❌ Over Budget";
   $("budgetStatus").textContent = status;
 
-  // Smart insights/recommendations
-  const smartInsights = $("smartInsights");
+  // Detailed insights
+  const detailedInsights = $("detailedInsights");
   let insights = [];
+  
+  if (filtered.length > 0) {
+    const minExp = Math.min(...filtered.map(e => e.amount));
+    const maxExp = Math.max(...filtered.map(e => e.amount));
+    const median = filtered.map(e => e.amount).sort((a,b) => a-b)[Math.floor(filtered.length/2)];
+    
+    insights.push({ label: "Smallest Expense", value: "₹" + formatNum(minExp) });
+    insights.push({ label: "Largest Expense", value: "₹" + formatNum(maxExp) });
+    insights.push({ label: "Median Expense", value: "₹" + formatNum(median) });
+    insights.push({ label: "Total Transactions", value: filtered.length });
+  }
+
+  const remainingDays = timeFilter === 999 ? 999 : timeFilter;
+  const budgetLeft = budget - sum;
+  if (dailyVel > 0 && budgetLeft > 0) {
+    const daysUntilFull = budgetLeft / dailyVel;
+    insights.push({ label: "Days Until Budget Full", value: Math.max(1, Math.ceil(daysUntilFull)) });
+  }
+
+  detailedInsights.innerHTML = insights.map(i => 
+    `<div class="insight-row"><span class="label">${i.label}</span><span class="value">${i.value}</span></div>`
+  ).join("");
+
+  // Smart recommendations
+  const smartInsights = $("smartInsights");
+  let recommendations = [];
 
   if (dailyVel > 0) {
     const daysUntilBudgetFull = (budget - sum) / dailyVel;
     if (daysUntilBudgetFull < 5 && daysUntilBudgetFull > 0) {
-      insights.push(`⚡ At current spending rate, your budget will be exhausted in ${Math.ceil(daysUntilBudgetFull)} days`);
+      recommendations.push(`⚡ Budget will be exhausted in ${Math.ceil(daysUntilBudgetFull)} days at current rate`);
     }
   }
 
   if (maxCat) {
-    insights.push(`🎯 ${maxCat} is your biggest expense category (${((catSum[maxCat] / sum) * 100).toFixed(0)}% of total)`);
+    recommendations.push(`🎯 ${maxCat} is your biggest category (${((catSum[maxCat] / sum) * 100).toFixed(0)}%)`);
   }
 
   if (avgTx > budget / 20) {
-    insights.push(`💡 Your average transaction (₹${Math.round(avgTx)}) is relatively high. Consider smaller purchases`);
+    recommendations.push(`💡 High average transaction (₹${formatNum(avgTx)}). Consider smaller purchases`);
   }
 
-  if (filtered.length > 0 && filtered.length < 3) {
-    insights.push(`📊 Add more expenses to get better spending insights`);
+  if (sum < budget * 0.3) {
+    recommendations.push(`🎉 Excellent control! Only ${((sum/budget)*100).toFixed(0)}% of budget used`);
   }
 
-  if (sum < budget * 0.5) {
-    insights.push(`🎉 You're in great shape! Less than 50% of budget spent`);
+  if (sum > budget * 0.9) {
+    recommendations.push(`⛔ Critical! You've exceeded ${((sum/budget)*100).toFixed(0)}% of budget`);
   }
 
-  smartInsights.innerHTML = insights.map(insight => 
-    `<div class="recommendation"><div class="recommendation-icon">${insight.charAt(0)}</div><div>${insight.substring(2)}</div></div>`
+  if (Object.keys(catSum).length === 1) {
+    recommendations.push(`📊 All expenses in one category. Try diversifying spending`);
+  }
+
+  smartInsights.innerHTML = recommendations.map(rec => 
+    `<div class="recommendation"><div>${rec}</div></div>`
   ).join("");
 }
 
-/* ─────────── CHARTS ─────────── */
 function drawDonut(catSum) {
   const c = $("donutChart"), ctx = c.getContext("2d");
   const W=200,H=200,cx=100,cy=100,R=82,r=50;
@@ -1459,7 +1511,7 @@ function drawDonut(catSum) {
   ctx.textAlign="center";
   ctx.fillStyle="#fff";
   ctx.font="bold 13px Syne,sans-serif";
-  ctx.fillText("₹"+(total>=1000?(total/1000).toFixed(1)+"k":total),cx,cy+5);
+  ctx.fillText("₹"+formatNum(total),cx,cy+5);
 
   const leg = $("legend");
   leg.innerHTML = "";
@@ -1472,7 +1524,7 @@ function drawDonut(catSum) {
           <span>${cat}</span>
         </div>
         <div>
-          <span class="legend-amt">₹${val.toLocaleString("en-IN")}</span>
+          <span class="legend-amt">₹${formatNum(val)}</span>
           <span class="legend-pct">${pct}%</span>
         </div>
       </div>`;
@@ -1523,12 +1575,11 @@ function drawWeekly(data) {
     if(day.total>0){
       ctx.fillStyle="rgba(255,255,255,0.7)";
       ctx.font="10px Outfit,sans-serif";
-      ctx.fillText("₹"+(day.total>=1000?(day.total/1000).toFixed(1)+"k":day.total),x+barW/2,y-6);
+      ctx.fillText("₹"+formatNum(day.total),x+barW/2,y-6);
     }
   });
 }
 
-/* ─────────── EXPORT/IMPORT ─────────── */
 function exportData() {
   const blob=new Blob([JSON.stringify(localStorage,null,2)],{type:"application/json"});
   const a=document.createElement("a");
@@ -1558,7 +1609,6 @@ function clearMonth() {
   toast("Month cleared");
 }
 
-/* ─────────── PDF ─────────── */
 function downloadMonthPDF() {
   const data = JSON.parse(localStorage[currentKey] || "[]");
   if (!data.length) return toast("No expenses to export");
@@ -1568,9 +1618,12 @@ function downloadMonthPDF() {
   const mTxt = $("monthSelect").options[$("monthSelect").selectedIndex].text;
   const budget = getBudget();
   const total = data.reduce((s,e)=>s+e.amount,0);
+  const today = new Date();
+  const days = today.getDate();
 
   let y = 20;
 
+  // Header
   doc.setFillColor(194, 255, 77);
   doc.rect(0, 0, 210, 50, "F");
   doc.setFontSize(28);
@@ -1579,28 +1632,29 @@ function downloadMonthPDF() {
   doc.text("BUDGET CAP", 15, 25);
   doc.setFontSize(14);
   doc.setTextColor(60, 60, 80);
-  doc.text(`Monthly Report • ${mTxt}`, 15, 38);
+  doc.text("Monthly Report - " + mTxt, 15, 38);
 
   y = 60;
 
+  // Summary boxes
   doc.setFillColor(240, 240, 255);
   doc.rect(15, y, 50, 35, "F");
   doc.setFontSize(10);
   doc.setTextColor(100, 100, 150);
   doc.text("TOTAL SPENT", 18, y+8);
-  doc.setFontSize(18);
+  doc.setFontSize(16);
   doc.setTextColor(0, 0, 0);
   doc.setFont("Helvetica", "bold");
-  doc.text(`₹${total.toLocaleString("en-IN")}`, 18, y+25);
+  doc.text("₹" + formatNum(total), 18, y+25);
 
   doc.setFillColor(240, 240, 255);
   doc.rect(70, y, 50, 35, "F");
   doc.setFontSize(10);
   doc.setTextColor(100, 100, 150);
   doc.text("BUDGET", 73, y+8);
-  doc.setFontSize(18);
+  doc.setFontSize(16);
   doc.setTextColor(0, 0, 0);
-  doc.text(`₹${budget.toLocaleString("en-IN")}`, 73, y+25);
+  doc.text("₹" + formatNum(budget), 73, y+25);
 
   const remaining = budget - total;
   doc.setFillColor(remaining >= 0 ? 200 : 255, 100, 100);
@@ -1608,12 +1662,46 @@ function downloadMonthPDF() {
   doc.setFontSize(10);
   doc.setTextColor(100, 100, 150);
   doc.text("REMAINING", 128, y+8);
-  doc.setFontSize(18);
+  doc.setFontSize(16);
   doc.setTextColor(0, 0, 0);
-  doc.text(`₹${Math.max(0, remaining).toLocaleString("en-IN")}`, 128, y+25);
+  doc.text("₹" + formatNum(Math.max(0, remaining)), 128, y+25);
 
   y += 50;
 
+  // Key Insights Section
+  doc.setFontSize(14);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("Helvetica", "bold");
+  doc.text("Key Insights", 15, y);
+  y += 10;
+
+  doc.setFontSize(9);
+  doc.setFont("Helvetica", "normal");
+  doc.setTextColor(60, 60, 60);
+
+  const avgTx = total / data.length;
+  const maxExp = Math.max(...data.map(e => e.amount));
+  const minExp = Math.min(...data.map(e => e.amount));
+  const avgDaily = total / days;
+
+  const insights = [
+    { label: "Daily Average", value: "₹" + formatNum(avgDaily) },
+    { label: "Average per Transaction", value: "₹" + formatNum(avgTx) },
+    { label: "Highest Transaction", value: "₹" + formatNum(maxExp) },
+    { label: "Lowest Transaction", value: "₹" + formatNum(minExp) },
+    { label: "Total Transactions", value: data.length },
+    { label: "Budget Utilization", value: Math.round((total / budget) * 100) + "%" }
+  ];
+
+  insights.forEach(insight => {
+    doc.text(insight.label + ":", 15, y);
+    doc.text(insight.value, 100, y);
+    y += 6;
+  });
+
+  y += 8;
+
+  // Category Breakdown
   doc.setFontSize(14);
   doc.setTextColor(0, 0, 0);
   doc.setFont("Helvetica", "bold");
@@ -1627,8 +1715,8 @@ function downloadMonthPDF() {
   doc.setTextColor(50, 50, 50);
   doc.setFont("Helvetica", "bold");
   doc.text("Category", 15, y);
-  doc.text("Amount", 120, y);
-  doc.text("% of Total", 160, y);
+  doc.text("Amount", 100, y);
+  doc.text("% of Total", 150, y);
   y += 8;
 
   doc.setDrawColor(200, 200, 200);
@@ -1640,23 +1728,24 @@ function downloadMonthPDF() {
     const pct = ((val / total) * 100).toFixed(1);
     doc.setTextColor(60, 60, 60);
     doc.text(cat, 15, y);
-    doc.text(`₹${val.toLocaleString("en-IN")}`, 120, y);
-    doc.text(`${pct}%`, 160, y);
+    doc.text("₹" + formatNum(val), 100, y);
+    doc.text(pct + "%", 150, y);
     y += 7;
   });
 
   y += 8;
 
+  // Expense table
   doc.setFontSize(14);
   doc.setTextColor(0, 0, 0);
   doc.setFont("Helvetica", "bold");
-  doc.text("All Expenses", 15, y);
+  doc.text("Detailed Expenses", 15, y);
   y += 10;
 
   doc.setFontSize(8);
   doc.setFont("Helvetica", "bold");
   doc.text("Date", 15, y);
-  doc.text("Description", 40, y);
+  doc.text("Description", 35, y);
   doc.text("Category", 120, y);
   doc.text("Amount", 160, y);
   y += 6;
@@ -1674,9 +1763,9 @@ function downloadMonthPDF() {
     doc.setTextColor(40, 40, 60);
     doc.setFontSize(7);
     doc.text(e.date, 15, y);
-    doc.text(e.title.substring(0, 25), 40, y);
+    doc.text(e.title.substring(0, 25), 35, y);
     doc.text(e.category, 120, y);
-    doc.text(`₹${e.amount.toLocaleString("en-IN")}`, 160, y);
+    doc.text("₹" + formatNum(e.amount), 160, y);
     y += 6;
 
     if (y > 270) {
@@ -1685,19 +1774,20 @@ function downloadMonthPDF() {
     }
   });
 
+  // Footer
   const pages = doc.internal.getNumberOfPages();
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);
     doc.setFontSize(8);
     doc.setTextColor(150, 150, 150);
     doc.text(
-      `Generated on ${new Date().toLocaleString()} | Page ${i} of ${pages}`,
+      "Generated on " + new Date().toLocaleString() + " | Page " + i + " of " + pages,
       15,
       287
     );
   }
 
-  doc.save(`BudgetCap-${mTxt.replace(/\s+/g, "-")}.pdf`);
+  doc.save("BudgetCap-" + mTxt.replace(/\s+/g, "-") + ".pdf");
   toast("PDF downloaded!");
 }
 
